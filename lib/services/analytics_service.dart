@@ -1,4 +1,3 @@
-
 import '../core/database/database_service.dart';
 
 class AnalyticsService {
@@ -22,9 +21,7 @@ class AnalyticsService {
     return result.first;
   }
 
-  Future<List<Map<String, dynamic>>> getFeeByDimension(
-    String dimension,
-  ) async {
+  Future<List<Map<String, dynamic>>> getFeeByDimension(String dimension) async {
     const allowedDimensions = {
       'School': 'school',
       'Program': 'program',
@@ -36,9 +33,7 @@ class AnalyticsService {
     final column = allowedDimensions[dimension];
 
     if (column == null) {
-      throw ArgumentError(
-        'Unsupported analytics dimension: $dimension',
-      );
+      throw ArgumentError('Unsupported analytics dimension: $dimension');
     }
 
     final db = await _dbService.database;

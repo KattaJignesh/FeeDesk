@@ -1,11 +1,7 @@
-
 import 'column_mapping_service.dart';
 import 'excel_import_service.dart';
 
-enum ValidationSeverity {
-  error,
-  warning,
-}
+enum ValidationSeverity { error, warning }
 
 class ValidationIssue {
   final int rowNumber;
@@ -25,10 +21,7 @@ class ValidationResult {
   final List<ValidationIssue> issues;
   final int totalRows;
 
-  const ValidationResult({
-    required this.issues,
-    required this.totalRows,
-  });
+  const ValidationResult({required this.issues, required this.totalRows});
 
   int get errorCount => issues
       .where((issue) => issue.severity == ValidationSeverity.error)
@@ -88,10 +81,7 @@ class ExcelValidationService {
     // Stop row validation if the dimension mapping is incomplete or duplicated.
     if (!mapping.isValid ||
         usedColumns.values.any((dimensions) => dimensions.length > 1)) {
-      return ValidationResult(
-        issues: issues,
-        totalRows: rows.length,
-      );
+      return ValidationResult(issues: issues, totalRows: rows.length);
     }
 
     // 3. Check for expenditure columns.
@@ -105,10 +95,7 @@ class ExcelValidationService {
         ),
       );
 
-      return ValidationResult(
-        issues: issues,
-        totalRows: rows.length,
-      );
+      return ValidationResult(issues: issues, totalRows: rows.length);
     }
 
     // 4. Detect exact duplicate rows, not merely matching dimensions.
@@ -117,8 +104,7 @@ class ExcelValidationService {
     for (int rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       final row = rows[rowIndex];
 
-      final sourceRowNumber =
-          sheet.headerRowNumber + rowIndex + 1;
+      final sourceRowNumber = sheet.headerRowNumber + rowIndex + 1;
 
       final recordKey = row.join('\u001F');
 
@@ -137,9 +123,7 @@ class ExcelValidationService {
       for (final entry in mapping.dimensionColumns.entries) {
         final columnIndex = entry.value;
 
-        final value = columnIndex < row.length
-            ? row[columnIndex].trim()
-            : '';
+        final value = columnIndex < row.length ? row[columnIndex].trim() : '';
 
         if (value.isEmpty) {
           issues.add(
@@ -162,9 +146,7 @@ class ExcelValidationService {
             ? sheet.headers[columnIndex]
             : 'Unknown fee';
 
-        final value = columnIndex < row.length
-            ? row[columnIndex].trim()
-            : '';
+        final value = columnIndex < row.length ? row[columnIndex].trim() : '';
 
         if (value.isEmpty) {
           issues.add(
@@ -257,14 +239,11 @@ class ExcelValidationService {
       }
     }
 
-    return ValidationResult(
-      issues: issues,
-      totalRows: rows.length,
-    );
+    return ValidationResult(issues: issues, totalRows: rows.length);
   }
 
   // Converts rupees into integer paise.
-  // Supports 30000, 30,000, ₹30,000 and 30000.50.
+  // Correctly handles negative values, including -0.50.
   int? _parseAmount(String input) {
     var value = input.trim();
 
@@ -276,15 +255,22 @@ class ExcelValidationService {
       return null;
     }
 
-    final parts = value.split('.');
+    final isNegative = value.startsWith('-');
+    final unsignedValue = isNegative ? value.substring(1) : value;
+
+    final parts = unsignedValue.split('.');
     final rupees = int.tryParse(parts[0]);
 
     if (rupees == null) return null;
 
     final paise = parts.length == 2
-        ? int.parse(parts[1].padRight(2, '0'))
+        ? int.tryParse(parts[1].padRight(2, '0'))
         : 0;
 
-    return rupees * 100 + (rupees < 0 ? -paise : paise);
+    if (paise == null) return null;
+
+    final totalPaise = rupees * 100 + paise;
+
+    return isNegative ? -totalPaise : totalPaise;
   }
 }

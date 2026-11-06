@@ -1,6 +1,3 @@
-
-
-
 import 'excel_import_service.dart';
 
 class ColumnMappingResult {
@@ -30,20 +27,9 @@ class ColumnMappingService {
       'batch',
       'admission year',
     ],
-    'Academic Year': [
-      'academic year',
-      'academic session',
-      'session',
-    ],
-    'School': [
-      'school',
-      'school name',
-      'faculty',
-    ],
-    'Degree': [
-      'degree',
-      'degree name',
-    ],
+    'Academic Year': ['academic year', 'academic session', 'session'],
+    'School': ['school', 'school name', 'faculty'],
+    'Degree': ['degree', 'degree name'],
     'Program': [
       'program',
       'programme',
@@ -52,12 +38,7 @@ class ColumnMappingService {
       'course',
       'course name',
     ],
-    'Study Year': [
-      'study year',
-      'year of study',
-      'year',
-      'study year name',
-    ],
+    'Study Year': ['study year', 'year of study', 'year', 'study year name'],
     'CQ/MQ': [
       'cq/mq',
       'cq mq',
@@ -87,9 +68,7 @@ class ColumnMappingService {
   bool _matchesAlias(String header, List<String> aliases) {
     final normalizedHeader = _normalize(header);
 
-    return aliases.any(
-      (alias) => normalizedHeader == _normalize(alias),
-    );
+    return aliases.any((alias) => normalizedHeader == _normalize(alias));
   }
 
   ColumnMappingResult detect(SheetPreview sheet) {

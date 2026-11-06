@@ -1,7 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
+import '../fee_explorer/fee_explorer_screen.dart';
+import '../import_history_screen.dart';
 import '../../services/excel_import_service.dart';
 import '../../services/column_mapping_service.dart';
 import '../../services/excel_validation_service.dart';
@@ -20,8 +21,7 @@ class ExcelImportScreen extends StatefulWidget {
 class _ExcelImportScreenState extends State<ExcelImportScreen> {
   final ExcelImportService _service = ExcelImportService();
   final ColumnMappingService _mappingService = ColumnMappingService();
-  final ExcelValidationService _validationService =
-      ExcelValidationService();
+  final ExcelValidationService _validationService = ExcelValidationService();
   final ImportService _importService = ImportService();
 
   final Map<String, Map<String, int?>> _manualMappings = {};
@@ -33,6 +33,164 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
 
   bool _loading = false;
   bool _importing = false;
+
+  static const Color brandBlue = Color(0xFF3157D5);
+  static const Color pageBackground = Color(0xFFF5F7FB);
+
+  void _goBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      _goHome();
+    }
+  }
+
+  void _goHome() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  void _openFeeExplorer() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const FeeExplorerScreen()),
+    );
+  }
+
+  void _openHistory() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const ImportHistoryScreen()),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool selected = false,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: selected ? brandBlue : const Color(0xFF65718A),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+          color: selected ? brandBlue : const Color(0xFF26334D),
+        ),
+      ),
+      selected: selected,
+      selectedTileColor: const Color(0xFFEEF1FF),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildNavigationDrawer() {
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 25, 20, 22),
+              decoration: const BoxDecoration(color: Color(0xFFF5F7FB)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.asset(
+                    'assets/branding/app_icon.png',
+                    width: 48,
+                    height: 48,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.account_balance_rounded,
+                      size: 42,
+                      color: brandBlue,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'FeeDesk',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF17233D),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Offline Fee Management',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF788397)),
+                  ),
+                ],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(18, 20, 18, 8),
+              child: Text(
+                'MAIN MENU',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF8993A5),
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+            _buildDrawerItem(
+              icon: Icons.home_rounded,
+              title: 'Home',
+              onTap: () {
+                Navigator.pop(context);
+                _goHome();
+              },
+            ),
+            _buildDrawerItem(
+              icon: Icons.upload_file_rounded,
+              title: 'Upload File',
+              selected: true,
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            _buildDrawerItem(
+              icon: Icons.manage_search_rounded,
+              title: 'Fee Explorer',
+              onTap: () {
+                Navigator.pop(context);
+                _openFeeExplorer();
+              },
+            ),
+            _buildDrawerItem(
+              icon: Icons.history_rounded,
+              title: 'Import History',
+              onTap: () {
+                Navigator.pop(context);
+                _openHistory();
+              },
+            ),
+            const Spacer(),
+            const Divider(height: 1),
+            const Padding(
+              padding: EdgeInsets.all(18),
+              child: Row(
+                children: [
+                  Icon(Icons.wifi_off_rounded, size: 17, color: Colors.green),
+                  SizedBox(width: 8),
+                  Text(
+                    'Works completely offline',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF788397)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Future<void> _selectExcelFile() async {
     setState(() {
@@ -90,14 +248,11 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
     final detected = _mappingService.detect(sheet);
 
     return {
-      for (final dimension
-          in ColumnMappingService.dimensionAliases.keys)
+      for (final dimension in ColumnMappingService.dimensionAliases.keys)
         dimension: detected.dimensionColumns[dimension],
     };
   }
 
-  // Combines manually selected dimensions with automatically
-  // detected expenditure and Total Fee columns.
   ColumnMappingResult _getEffectiveMapping(SheetPreview sheet) {
     final detected = _mappingService.detect(sheet);
     final selectedMappings = _getMappings(sheet);
@@ -110,10 +265,9 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
       }
     }
 
-    final missingDimensions =
-        ColumnMappingService.dimensionAliases.keys
-            .where((dimension) => !dimensions.containsKey(dimension))
-            .toList();
+    final missingDimensions = ColumnMappingService.dimensionAliases.keys
+        .where((dimension) => !dimensions.containsKey(dimension))
+        .toList();
 
     return ColumnMappingResult(
       dimensionColumns: dimensions,
@@ -126,16 +280,12 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
   ValidationResult _getValidationResult(SheetPreview sheet) {
     final mapping = _getEffectiveMapping(sheet);
 
-    return _validationService.validate(
-      sheet: sheet,
-      mapping: mapping,
-    );
+    return _validationService.validate(sheet: sheet, mapping: mapping);
   }
 
   Future<void> _confirmImport(SheetPreview sheet) async {
     if (_fileName == null || _importing) return;
 
-    // Use the actual mappings currently selected in the editor.
     final mapping = _getEffectiveMapping(sheet);
 
     final validation = _validationService.validate(
@@ -208,9 +358,7 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Import successful! Version ${summary.versionNumber}',
-          ),
+          content: Text('Import successful! Version ${summary.versionNumber}'),
           backgroundColor: Colors.green,
         ),
       );
@@ -235,18 +383,15 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
   Widget _buildMappingSummary(SheetPreview sheet) {
     final result = _getEffectiveMapping(sheet);
 
-    // Also detect duplicate mappings for the summary indicator.
     final usedColumns = <int, int>{};
 
     for (final index in result.dimensionColumns.values) {
       usedColumns[index] = (usedColumns[index] ?? 0) + 1;
     }
 
-    final hasDuplicateMappings =
-        usedColumns.values.any((count) => count > 1);
+    final hasDuplicateMappings = usedColumns.values.any((count) => count > 1);
 
-    final mappingValid =
-        result.isValid && !hasDuplicateMappings;
+    final mappingValid = result.isValid && !hasDuplicateMappings;
 
     return Container(
       width: double.infinity,
@@ -265,16 +410,11 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
               const Expanded(
                 child: Text(
                   'Column detection and mapping',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
               Icon(
-                mappingValid
-                    ? Icons.check_circle
-                    : Icons.warning_amber_rounded,
+                mappingValid ? Icons.check_circle : Icons.warning_amber_rounded,
                 color: mappingValid ? Colors.green : Colors.orange,
               ),
               const SizedBox(width: 5),
@@ -298,12 +438,9 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
             final columnIndex = result.dimensionColumns[dimension];
             final isFound = columnIndex != null;
 
-            final header = isFound
-                ? sheet.headers[columnIndex]
-                : 'Not mapped';
+            final header = isFound ? sheet.headers[columnIndex] : 'Not mapped';
 
-            final isDuplicate = isFound &&
-                (usedColumns[columnIndex] ?? 0) > 1;
+            final isDuplicate = isFound && (usedColumns[columnIndex] ?? 0) > 1;
 
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5),
@@ -351,10 +488,7 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
           if (result.expenditureColumns.isEmpty)
             const Text(
               'No expenditure columns detected.',
-              style: TextStyle(
-                color: Colors.orange,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.orange, fontSize: 12),
             )
           else
             Wrap(
@@ -362,10 +496,7 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
               runSpacing: 7,
               children: result.expenditureColumns.map((index) {
                 return Chip(
-                  avatar: const Icon(
-                    Icons.currency_rupee,
-                    size: 15,
-                  ),
+                  avatar: const Icon(Icons.currency_rupee, size: 15),
                   label: Text(
                     sheet.headers[index],
                     style: const TextStyle(fontSize: 11),
@@ -384,10 +515,7 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
               ),
               const SizedBox(width: 8),
               const Expanded(
-                child: Text(
-                  'Source Total Fee',
-                  style: TextStyle(fontSize: 12),
-                ),
+                child: Text('Source Total Fee', style: TextStyle(fontSize: 12)),
               ),
               Text(
                 result.sourceTotalColumn == null
@@ -407,10 +535,7 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
           const Text(
             'Total Fee is used for validation, not as an additional '
             'expenditure. This prevents double counting.',
-            style: TextStyle(
-              fontSize: 11,
-              color: Color(0xFF788397),
-            ),
+            style: TextStyle(fontSize: 11, color: Color(0xFF788397)),
           ),
         ],
       ),
@@ -435,10 +560,7 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.table_chart_rounded,
-                color: Color(0xFF3157D5),
-              ),
+              const Icon(Icons.table_chart_rounded, color: Color(0xFF3157D5)),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -451,20 +573,14 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
               ),
               Text(
                 '${sheet.totalRows} rows',
-                style: const TextStyle(
-                  color: Color(0xFF788397),
-                  fontSize: 12,
-                ),
+                style: const TextStyle(color: Color(0xFF788397), fontSize: 12),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             'Header row: ${sheet.headerRowNumber}',
-            style: const TextStyle(
-              color: Color(0xFF788397),
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: Color(0xFF788397), fontSize: 12),
           ),
           const SizedBox(height: 10),
           const Text(
@@ -489,10 +605,7 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
           const SizedBox(height: 20),
           const Text(
             'Review column mappings',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
           const SizedBox(height: 10),
           ColumnMappingEditor(
@@ -506,9 +619,7 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
             },
           ),
           const Divider(height: 32),
-          ValidationReportPanel(
-            result: validationResult,
-          ),
+          ValidationReportPanel(result: validationResult),
           const SizedBox(height: 20),
           const Text(
             'Sample records (first 5):',
@@ -523,19 +634,14 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
               child: DataTable(
                 columns: sheet.headers.map((header) {
                   return DataColumn(
-                    label: Text(
-                      header.isEmpty ? '(Empty)' : header,
-                    ),
+                    label: Text(header.isEmpty ? '(Empty)' : header),
                   );
                 }).toList(),
                 rows: sheet.sampleRows.map((row) {
                   return DataRow(
                     cells: row.map((value) {
                       return DataCell(
-                        Text(
-                          value,
-                          style: const TextStyle(fontSize: 12),
-                        ),
+                        Text(value, style: const TextStyle(fontSize: 12)),
                       );
                     }).toList(),
                   );
@@ -568,8 +674,7 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton.icon(
-              onPressed: _importing ||
-                      !validationResult.canImport
+              onPressed: _importing || !validationResult.canImport
                   ? null
                   : () => _confirmImport(sheet),
               icon: _importing
@@ -583,12 +688,10 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
                     )
                   : const Icon(Icons.upload_file_rounded),
               label: Text(
-                _importing
-                    ? 'Importing...'
-                    : 'Import Complete Dataset',
+                _importing ? 'Importing...' : 'Import Complete Dataset',
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3157D5),
+                backgroundColor: brandBlue,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -604,120 +707,164 @@ class _ExcelImportScreenState extends State<ExcelImportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Import Excel Data',
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF17233D),
-            ),
+    return Theme(
+      data: ThemeData.light().copyWith(
+        scaffoldBackgroundColor: pageBackground,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: brandBlue,
+          brightness: Brightness.light,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: pageBackground,
+
+        // Top bar with back button and menu.
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF17233D),
+          elevation: 0,
+          leading: IconButton(
+            tooltip: 'Go back',
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: _goBack,
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Select, preview, map and validate your university fee workbook.',
-            style: TextStyle(
-              color: Color(0xFF788397),
-              fontSize: 13,
-            ),
+          title: const Text(
+            'FeeDesk',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
           ),
-          const SizedBox(height: 25),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE5EAF2)),
+          actions: [
+            Builder(
+              builder: (context) => IconButton(
+                tooltip: 'Open navigation menu',
+                icon: const Icon(Icons.menu_rounded),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              ),
             ),
-            child: Column(
-              children: [
-                const Icon(
-                  Icons.upload_file_rounded,
-                  size: 48,
-                  color: Color(0xFF3157D5),
-                ),
-                const SizedBox(height: 15),
-                const Text(
-                  'Select your Excel workbook',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                const Text(
-                  'Supported format: .xlsx',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF788397),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _loading || _importing
-                      ? null
-                      : _selectExcelFile,
-                  icon: const Icon(Icons.folder_open_rounded),
-                  label: const Text('Browse Files'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3157D5),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 25,
-                      vertical: 15,
+          ],
+        ),
+
+        drawer: _buildNavigationDrawer(),
+
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1400),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(30),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Import Excel Data',
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF17233D),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Select, preview, map and validate your university fee workbook.',
+                      style: TextStyle(color: Color(0xFF788397), fontSize: 13),
+                    ),
+                    const SizedBox(height: 25),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(28),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE5EAF2)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.upload_file_rounded,
+                            size: 48,
+                            color: brandBlue,
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            'Select your Excel workbook',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 7),
+                          const Text(
+                            'Supported format: .xlsx',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF788397),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: _loading || _importing
+                                ? null
+                                : _selectExcelFile,
+                            icon: const Icon(Icons.folder_open_rounded),
+                            label: const Text('Browse Files'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: brandBlue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 25,
+                                vertical: 15,
+                              ),
+                            ),
+                          ),
+                          if (_loading) ...[
+                            const SizedBox(height: 18),
+                            const CircularProgressIndicator(),
+                            const SizedBox(height: 8),
+                            const Text('Reading workbook...'),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFEEEE),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (_preview != null) ...[
+                      const SizedBox(height: 25),
+                      Text(
+                        'Workbook: $_fileName',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      if (_preview!.sheets.isEmpty)
+                        const Text(
+                          'No readable worksheets were found.',
+                          style: TextStyle(color: Colors.orange),
+                        ),
+                      ..._preview!.sheets.map(_buildSheetCard),
+                    ],
+                  ],
                 ),
-                if (_loading) ...[
-                  const SizedBox(height: 18),
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 8),
-                  const Text('Reading workbook...'),
-                ],
-              ],
+              ),
             ),
           ),
-          if (_error != null) ...[
-            const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFEEEE),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                _error!,
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ],
-          if (_preview != null) ...[
-            const SizedBox(height: 25),
-            Text(
-              'Workbook: $_fileName',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 15),
-            if (_preview!.sheets.isEmpty)
-              const Text(
-                'No readable worksheets were found.',
-                style: TextStyle(color: Colors.orange),
-              ),
-            ..._preview!.sheets.map(_buildSheetCard),
-          ],
-        ],
+        ),
       ),
     );
   }

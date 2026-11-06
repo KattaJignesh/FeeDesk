@@ -1,4 +1,3 @@
-
 import 'package:sqflite/sqflite.dart';
 
 import '../core/database/database_service.dart';
@@ -23,8 +22,7 @@ class ImportSummary {
 
 class ImportService {
   ImportService({DatabaseService? databaseService})
-      : _databaseService =
-            databaseService ?? DatabaseService.instance;
+    : _databaseService = databaseService ?? DatabaseService.instance;
 
   final DatabaseService _databaseService;
 
@@ -50,9 +48,7 @@ class ImportService {
     }
 
     if (mapping.expenditureColumns.isEmpty) {
-      throw Exception(
-        'Cannot import: no expenditure columns were detected.',
-      );
+      throw Exception('Cannot import: no expenditure columns were detected.');
     }
 
     // Ensure every required dimension has a distinct Excel column.
@@ -85,8 +81,7 @@ class ImportService {
         'FROM dataset_imports',
       );
 
-      final versionNumber =
-          (versionResult.first['next_version'] as int?) ?? 1;
+      final versionNumber = (versionResult.first['next_version'] as int?) ?? 1;
 
       final importedAt = DateTime.now().toIso8601String();
 
@@ -106,21 +101,16 @@ class ImportService {
       int expenditureItems = 0;
       final categoryIds = <String, int>{};
 
-      for (int rowIndex = 0;
-          rowIndex < sheet.dataRows.length;
-          rowIndex++) {
+      for (int rowIndex = 0; rowIndex < sheet.dataRows.length; rowIndex++) {
         final row = sheet.dataRows[rowIndex];
 
         // Read the seven required dimensions.
         final dimensionValues = <String, String>{};
 
         for (final dimension in _dimensions) {
-          final columnIndex =
-              _findDimensionColumn(mapping, dimension)!;
+          final columnIndex = _findDimensionColumn(mapping, dimension)!;
 
-          final value = columnIndex < row.length
-              ? row[columnIndex].trim()
-              : '';
+          final value = columnIndex < row.length ? row[columnIndex].trim() : '';
 
           if (value.isEmpty) {
             throw Exception(
@@ -143,8 +133,7 @@ class ImportService {
           if (totalValue.isNotEmpty) {
             sourceTotalPaise = _parseAmount(totalValue);
 
-            if (sourceTotalPaise == null ||
-                sourceTotalPaise < 0) {
+            if (sourceTotalPaise == null || sourceTotalPaise < 0) {
               throw Exception(
                 'Invalid source Total Fee in Excel row '
                 '${sheet.headerRowNumber + rowIndex + 1}.',
@@ -190,23 +179,17 @@ class ImportService {
           final categoryName = sheet.headers[columnIndex].trim();
 
           if (categoryName.isEmpty) {
-            throw Exception(
-              'An expenditure column has an empty header.',
-            );
+            throw Exception('An expenditure column has an empty header.');
           }
 
           int? categoryId = categoryIds[categoryName];
 
           if (categoryId == null) {
-            await txn.insert(
-              'expenditure_categories',
-              {
-                'name': categoryName,
-                'is_active': 1,
-                'created_at': importedAt,
-              },
-              conflictAlgorithm: ConflictAlgorithm.ignore,
-            );
+            await txn.insert('expenditure_categories', {
+              'name': categoryName,
+              'is_active': 1,
+              'created_at': importedAt,
+            }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
             final categoryResult = await txn.query(
               'expenditure_categories',
@@ -241,19 +224,14 @@ class ImportService {
 
       // Only after all rows have been saved successfully,
       // archive the previous active version.
-      await txn.update(
-        'dataset_imports',
-        {'status': 'archived'},
-        where: "status = 'active'",
-      );
+      await txn.update('dataset_imports', {
+        'status': 'archived',
+      }, where: "status = 'active'");
 
       // Activate the new version.
       await txn.update(
         'dataset_imports',
-        {
-          'accepted_rows': importedRows,
-          'status': 'active',
-        },
+        {'accepted_rows': importedRows, 'status': 'active'},
         where: 'id = ?',
         whereArgs: [importId],
       );
@@ -277,10 +255,7 @@ class ImportService {
     });
   }
 
-  int? _findDimensionColumn(
-    ColumnMappingResult mapping,
-    String dimension,
-  ) {
+  int? _findDimensionColumn(ColumnMappingResult mapping, String dimension) {
     for (final entry in mapping.dimensionColumns.entries) {
       if (_normalize(entry.key) == _normalize(dimension)) {
         return entry.value;
@@ -291,11 +266,11 @@ class ImportService {
   }
 
   String _normalize(String value) {
-    return value
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
   }
 
+  // Converts rupees into integer paise.
+  // Correctly handles negative values, including -0.50.
   int? _parseAmount(String input) {
     var value = input.trim();
 
@@ -307,15 +282,22 @@ class ImportService {
       return null;
     }
 
-    final parts = value.split('.');
+    final isNegative = value.startsWith('-');
+    final unsignedValue = isNegative ? value.substring(1) : value;
+
+    final parts = unsignedValue.split('.');
     final rupees = int.tryParse(parts[0]);
 
     if (rupees == null) return null;
 
     final paise = parts.length == 2
-        ? int.parse(parts[1].padRight(2, '0'))
+        ? int.tryParse(parts[1].padRight(2, '0'))
         : 0;
 
-    return rupees * 100 + (rupees < 0 ? -paise : paise);
+    if (paise == null) return null;
+
+    final totalPaise = rupees * 100 + paise;
+
+    return isNegative ? -totalPaise : totalPaise;
   }
 }

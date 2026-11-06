@@ -1,10 +1,8 @@
-
 import '../core/database/database_service.dart';
 
 class FeeExplorerService {
   FeeExplorerService({DatabaseService? databaseService})
-      : _databaseService =
-            databaseService ?? DatabaseService.instance;
+    : _databaseService = databaseService ?? DatabaseService.instance;
 
   final DatabaseService _databaseService;
 
@@ -19,9 +17,7 @@ class FeeExplorerService {
   };
 
   String _whereClause(Map<String, String> filters) {
-    return filters.keys
-        .map((key) => '${dimensions[key]} = ?')
-        .join(' AND ');
+    return filters.keys.map((key) => '${dimensions[key]} = ?').join(' AND ');
   }
 
   List<Object?> _whereArgs(Map<String, String> filters) {
@@ -50,20 +46,15 @@ class FeeExplorerService {
       args.addAll(_whereArgs(filters));
     }
 
-    final result = await db.rawQuery(
-      '''
+    final result = await db.rawQuery('''
       SELECT DISTINCT f.$column AS value
       FROM fee_records f
       INNER JOIN dataset_imports d ON d.id = f.import_id
       WHERE ${conditions.join(' AND ')}
       ORDER BY value
-      ''',
-      args,
-    );
+      ''', args);
 
-    return result
-        .map((row) => row['value'].toString())
-        .toList();
+    return result.map((row) => row['value'].toString()).toList();
   }
 
   Future<Map<String, Object?>> getFeeSummary(
@@ -79,20 +70,16 @@ class FeeExplorerService {
       args.addAll(_whereArgs(filters));
     }
 
-    final records = await db.rawQuery(
-      '''
+    final records = await db.rawQuery('''
       SELECT
         COUNT(DISTINCT f.id) AS record_count,
         COALESCE(SUM(f.source_total_paise), 0) AS source_total
       FROM fee_records f
       INNER JOIN dataset_imports d ON d.id = f.import_id
       WHERE ${conditions.join(' AND ')}
-      ''',
-      args,
-    );
+      ''', args);
 
-    final categories = await db.rawQuery(
-      '''
+    final categories = await db.rawQuery('''
       SELECT
         c.name AS category,
         COALESCE(SUM(e.amount_paise), 0) AS total_paise
@@ -103,9 +90,7 @@ class FeeExplorerService {
       WHERE ${conditions.join(' AND ')}
       GROUP BY c.id, c.name
       ORDER BY c.name
-      ''',
-      args,
-    );
+      ''', args);
 
     final categoryTotals = <String, int>{};
     var calculatedTotal = 0;
@@ -146,8 +131,7 @@ class FeeExplorerService {
       args.addAll(_whereArgs(comparisonFilters));
     }
 
-    final rows = await db.rawQuery(
-      '''
+    final rows = await db.rawQuery('''
       SELECT
         f.admitted_batch,
         f.academic_year,
@@ -164,22 +148,16 @@ class FeeExplorerService {
         f.admitted_batch,
         f.academic_year,
         f.study_year
-      ''',
-      args,
-    );
+      ''', args);
 
     return rows.map((row) {
       final batch = row['admitted_batch']?.toString() ?? '';
       final academicYear = row['academic_year']?.toString() ?? '';
       final sourceStudyYear = row['study_year']?.toString() ?? '';
 
-      final expected = _calculateExpectedStudyYear(
-        batch,
-        academicYear,
-      );
+      final expected = _calculateExpectedStudyYear(batch, academicYear);
 
-      final sourceNumber =
-          _extractStudyYearNumber(sourceStudyYear);
+      final sourceNumber = _extractStudyYearNumber(sourceStudyYear);
 
       return {
         'admittedBatch': batch,
@@ -187,17 +165,15 @@ class FeeExplorerService {
         'sourceStudyYear': sourceStudyYear,
         'expectedStudyYear': expected,
         'recordCount': (row['record_count'] as num).toInt(),
-        'isMismatch': expected != null &&
+        'isMismatch':
+            expected != null &&
             sourceNumber != null &&
             expected != sourceNumber,
       };
     }).toList();
   }
 
-  int? _calculateExpectedStudyYear(
-    String admittedBatch,
-    String academicYear,
-  ) {
+  int? _calculateExpectedStudyYear(String admittedBatch, String academicYear) {
     final batchStart = _extractYear(admittedBatch);
     final academicStart = _extractYear(academicYear);
 

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../services/column_mapping_service.dart';
@@ -16,8 +15,7 @@ class ColumnMappingEditor extends StatefulWidget {
   });
 
   @override
-  State<ColumnMappingEditor> createState() =>
-      _ColumnMappingEditorState();
+  State<ColumnMappingEditor> createState() => _ColumnMappingEditorState();
 }
 
 class _ColumnMappingEditorState extends State<ColumnMappingEditor> {
@@ -41,8 +39,7 @@ class _ColumnMappingEditorState extends State<ColumnMappingEditor> {
 
   void _initializeMappings() {
     _mappings = {
-      for (final dimension
-          in ColumnMappingService.dimensionAliases.keys)
+      for (final dimension in ColumnMappingService.dimensionAliases.keys)
         dimension: widget.initialMappings[dimension],
     };
   }
@@ -59,8 +56,7 @@ class _ColumnMappingEditorState extends State<ColumnMappingEditor> {
   Widget build(BuildContext context) {
     final dimensions = ColumnMappingService.dimensionAliases.keys;
 
-    final mappedCount =
-        _mappings.values.where((value) => value != null).length;
+    final mappedCount = _mappings.values.where((value) => value != null).length;
 
     return Container(
       width: double.infinity,
@@ -86,10 +82,7 @@ class _ColumnMappingEditorState extends State<ColumnMappingEditor> {
 
           const Text(
             'Match each required field with its corresponding Excel column.',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF788397),
-            ),
+            style: TextStyle(fontSize: 12, color: Color(0xFF788397)),
           ),
 
           const SizedBox(height: 16),
@@ -180,10 +173,7 @@ class _ColumnMappingEditorState extends State<ColumnMappingEditor> {
             child: const Text(
               'Automatic detection provides the initial selections. '
               'You can change any selection manually.',
-              style: TextStyle(
-                fontSize: 11,
-                color: Color(0xFF53627A),
-              ),
+              style: TextStyle(fontSize: 11, color: Color(0xFF53627A)),
             ),
           ),
         ],

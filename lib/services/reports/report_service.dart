@@ -1,6 +1,3 @@
-
-
-
 import '../../core/database/database_service.dart';
 
 class ReportService {
@@ -37,9 +34,7 @@ class ReportService {
     }
 
     return {
-      'where': conditions.isEmpty
-          ? ''
-          : ' AND ${conditions.join(' AND ')}',
+      'where': conditions.isEmpty ? '' : ' AND ${conditions.join(' AND ')}',
       'arguments': arguments,
     };
   }
@@ -57,13 +52,9 @@ class ReportService {
 
     final db = await _databaseService.database;
 
-    final conditions = _buildConditions(
-      filters,
-      excludeDimension: dimension,
-    );
+    final conditions = _buildConditions(filters, excludeDimension: dimension);
 
-    final rows = await db.rawQuery(
-      '''
+    final rows = await db.rawQuery('''
       SELECT DISTINCT f.$column AS option_value
       FROM fee_records f
       INNER JOIN dataset_imports d ON d.id = f.import_id
@@ -72,13 +63,9 @@ class ReportService {
         AND TRIM(f.$column) != ''
         ${conditions['where']}
       ORDER BY f.$column COLLATE NOCASE
-      ''',
-      conditions['arguments'] as List<Object?>,
-    );
+      ''', conditions['arguments'] as List<Object?>);
 
-    return rows
-        .map((row) => row['option_value'].toString())
-        .toList();
+    return rows.map((row) => row['option_value'].toString()).toList();
   }
 
   // Fetch filtered report records and their expenditure categories.
@@ -89,37 +76,29 @@ class ReportService {
 
     final conditions = _buildConditions(filters);
 
-    final records = await db.rawQuery(
-      '''
+    final records = await db.rawQuery('''
       SELECT f.*
       FROM fee_records f
       INNER JOIN dataset_imports d ON d.id = f.import_id
       WHERE d.status = 'active'
         ${conditions['where']}
       ORDER BY f.id
-      ''',
-      conditions['arguments'] as List<Object?>,
-    );
+      ''', conditions['arguments'] as List<Object?>);
 
-    final recordIds = records
-        .map((record) => record['id'] as int)
-        .toList();
+    final recordIds = records.map((record) => record['id'] as int).toList();
 
     List<Map<String, Object?>> categories = [];
 
     if (recordIds.isNotEmpty) {
       final placeholders = List.filled(recordIds.length, '?').join(',');
 
-      categories = await db.rawQuery(
-        '''
+      categories = await db.rawQuery('''
         SELECT DISTINCT c.name
         FROM expenditure_categories c
         INNER JOIN expenditure_items e ON e.category_id = c.id
         WHERE e.fee_record_id IN ($placeholders)
         ORDER BY c.name COLLATE NOCASE
-        ''',
-        recordIds,
-      );
+        ''', recordIds);
     }
 
     final categoryNames = categories
@@ -146,7 +125,8 @@ class ReportService {
       for (final item in items) {
         final name = item['name'].toString();
 
-        amounts[name] = (amounts[name] ?? 0) +
+        amounts[name] =
+            (amounts[name] ?? 0) +
             ((item['amount_paise'] as num?)?.toInt() ?? 0);
       }
 
@@ -165,14 +145,12 @@ class ReportService {
     final totalSourcePaise = reportRecords.fold<int>(
       0,
       (sum, record) =>
-          sum +
-          ((record['source_total_paise'] as num?)?.toInt() ?? 0),
+          sum + ((record['source_total_paise'] as num?)?.toInt() ?? 0),
     );
 
     final totalCalculatedPaise = reportRecords.fold<int>(
       0,
-      (sum, record) =>
-          sum + (record['calculated_total_paise'] as int),
+      (sum, record) => sum + (record['calculated_total_paise'] as int),
     );
 
     return {

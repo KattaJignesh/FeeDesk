@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -82,18 +81,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return '₹${value.toStringAsFixed(2)}';
   }
 
-  Widget _summaryCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _summaryCard(String title, String value, IconData icon, Color color) {
     return Card(
       elevation: 1,
       color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -110,26 +102,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              title,
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
+            Text(title, style: TextStyle(color: Colors.grey.shade600)),
           ],
         ),
       ),
     );
   }
 
-  Widget _sectionCard({
-    required String title,
-    required Widget child,
-  }) {
+  Widget _sectionCard({required String title, required Widget child}) {
     return Card(
       elevation: 1,
       color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -137,10 +121,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             child,
@@ -164,9 +145,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
     final items = rows.take(6).toList();
 
-    final values = items
-        .map((e) => _rupees(e['total_paise']))
-        .toList();
+    final values = items.map((e) => _rupees(e['total_paise'])).toList();
 
     final maxValue = values.reduce((a, b) => a > b ? a : b);
 
@@ -178,9 +157,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           alignment: BarChartAlignment.spaceAround,
           gridData: const FlGridData(show: true),
           borderData: FlBorderData(show: false),
-          barTouchData: BarTouchData(
-            enabled: true,
-          ),
+          barTouchData: BarTouchData(enabled: true),
           titlesData: FlTitlesData(
             topTitles: const AxisTitles(
               sideTitles: SideTitles(showTitles: false),
@@ -189,10 +166,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               sideTitles: SideTitles(showTitles: false),
             ),
             leftTitles: const AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 55,
-              ),
+              sideTitles: SideTitles(showTitles: true, reservedSize: 55),
             ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
@@ -205,8 +179,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     return const SizedBox.shrink();
                   }
 
-                  final label =
-                      (items[index]['label'] ?? '').toString();
+                  final label = (items[index]['label'] ?? '').toString();
 
                   return SideTitleWidget(
                     meta: meta,
@@ -253,9 +226,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     if (_categories.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 25),
-        child: Center(
-          child: Text('No expenditure data available'),
-        ),
+        child: Center(child: Text('No expenditure data available')),
       );
     }
 
@@ -279,16 +250,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   Expanded(
                     child: Text(
                       item['label'].toString(),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ),
                   Text(
                     _money(amount),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -305,10 +272,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               const SizedBox(height: 4),
               Text(
                 '${(percentage * 100).toStringAsFixed(1)}%',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ],
           ),
@@ -323,210 +287,188 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final recordCount =
-        (_overview['record_count'] as num? ?? 0).toInt();
+    final recordCount = (_overview['record_count'] as num? ?? 0).toInt();
 
-    final schoolCount =
-        (_overview['school_count'] as num? ?? 0).toInt();
+    final schoolCount = (_overview['school_count'] as num? ?? 0).toInt();
 
-    final programCount =
-        (_overview['program_count'] as num? ?? 0).toInt();
+    final programCount = (_overview['program_count'] as num? ?? 0).toInt();
 
-    final degreeCount =
-        (_overview['degree_count'] as num? ?? 0).toInt();
+    final degreeCount = (_overview['degree_count'] as num? ?? 0).toInt();
 
-    final totalFee = _money(
-      _rupees(_overview['total_fee_paise']),
-    );
+    final totalFee = _money(_rupees(_overview['total_fee_paise']));
 
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(
         child: _loading
-            ? const Center(
-                child: CircularProgressIndicator(),
-              )
+            ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 42,
-                          ),
-                          const SizedBox(height: 12),
-                          const Text('Could not load analytics'),
-                          const SizedBox(height: 8),
-                          Text(
-                            _error!,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _loadAnalytics,
-                            child: const Text('Retry'),
-                          ),
-                        ],
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, size: 42),
+                      const SizedBox(height: 12),
+                      const Text('Could not load analytics'),
+                      const SizedBox(height: 8),
+                      Text(_error!, textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadAnalytics,
+                        child: const Text('Retry'),
                       ),
-                    ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _loadAnalytics,
-                    child: ListView(
-                      padding: const EdgeInsets.all(24),
+                    ],
+                  ),
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _loadAnalytics,
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    // Header.
+                    Row(
                       children: [
-                        // Header.
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Analytics Overview',
-                                    style: TextStyle(
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Insights from your active fee dataset',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Analytics Overview',
+                                style: TextStyle(
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            IconButton(
-                              tooltip: 'Refresh analytics',
-                              onPressed: _loadAnalytics,
-                              icon: const Icon(Icons.refresh),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 22),
-
-                        // Summary cards.
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final columns =
-                                constraints.maxWidth > 850 ? 4 : 2;
-
-                            final cardWidth =
-                                (constraints.maxWidth -
-                                    (columns - 1) * 14) /
-                                    columns;
-
-                            final cards = [
-                              _summaryCard(
-                                'Total fee amount',
-                                totalFee,
-                                Icons.currency_rupee,
-                                _blue,
+                              SizedBox(height: 5),
+                              Text(
+                                'Insights from your active fee dataset',
+                                style: TextStyle(color: Colors.grey),
                               ),
-                              _summaryCard(
-                                'Fee records',
-                                recordCount.toString(),
-                                Icons.receipt_long,
-                                Colors.deepPurple,
-                              ),
-                              _summaryCard(
-                                'Schools',
-                                schoolCount.toString(),
-                                Icons.school,
-                                Colors.teal,
-                              ),
-                              _summaryCard(
-                                'Programmes',
-                                programCount.toString(),
-                                Icons.menu_book,
-                                Colors.orange,
-                              ),
-                              _summaryCard(
-                                'Degrees',
-                                degreeCount.toString(),
-                                Icons.school_outlined,
-                                Colors.indigo,
-                              ),
-                            ];
-
-                            return Wrap(
-                              spacing: 14,
-                              runSpacing: 14,
-                              children: cards.map((card) {
-                                return SizedBox(
-                                  width: cardWidth,
-                                  child: card,
-                                );
-                              }).toList(),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        _sectionCard(
-                          title: 'School-wise Fee Distribution',
-                          child: _barChart(_schools),
-                        ),
-
-                        const SizedBox(height: 18),
-
-                        _sectionCard(
-                          title: 'Programme-wise Fee Distribution',
-                          child: _barChart(_programs),
-                        ),
-
-                        const SizedBox(height: 18),
-
-                        _sectionCard(
-                          title: 'Degree-wise Fee Distribution',
-                          child: _barChart(_degrees),
-                        ),
-
-                        const SizedBox(height: 18),
-
-                        _sectionCard(
-                          title: 'Study Year-wise Fee Distribution',
-                          child: _barChart(_studyYears),
-                        ),
-
-                        const SizedBox(height: 18),
-
-                        _sectionCard(
-                          title: 'CQ/MQ Fee Distribution',
-                          child: _barChart(_quotas),
-                        ),
-
-                        const SizedBox(height: 18),
-
-                        _sectionCard(
-                          title: 'Expenditure Breakdown',
-                          child: _categoryBreakdown(),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        Text(
-                          'Amounts are calculated from fee records in '
-                          'the active imported dataset. They are not '
-                          'verified collections or payments. Charts '
-                          'show the six highest-value groups.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
+                            ],
                           ),
+                        ),
+                        IconButton(
+                          tooltip: 'Refresh analytics',
+                          onPressed: _loadAnalytics,
+                          icon: const Icon(Icons.refresh),
                         ),
                       ],
                     ),
-                  ),
+
+                    const SizedBox(height: 22),
+
+                    // Summary cards.
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns = constraints.maxWidth > 850 ? 4 : 2;
+
+                        final cardWidth =
+                            (constraints.maxWidth - (columns - 1) * 14) /
+                            columns;
+
+                        final cards = [
+                          _summaryCard(
+                            'Total fee amount',
+                            totalFee,
+                            Icons.currency_rupee,
+                            _blue,
+                          ),
+                          _summaryCard(
+                            'Fee records',
+                            recordCount.toString(),
+                            Icons.receipt_long,
+                            Colors.deepPurple,
+                          ),
+                          _summaryCard(
+                            'Schools',
+                            schoolCount.toString(),
+                            Icons.school,
+                            Colors.teal,
+                          ),
+                          _summaryCard(
+                            'Programmes',
+                            programCount.toString(),
+                            Icons.menu_book,
+                            Colors.orange,
+                          ),
+                          _summaryCard(
+                            'Degrees',
+                            degreeCount.toString(),
+                            Icons.school_outlined,
+                            Colors.indigo,
+                          ),
+                        ];
+
+                        return Wrap(
+                          spacing: 14,
+                          runSpacing: 14,
+                          children: cards.map((card) {
+                            return SizedBox(width: cardWidth, child: card);
+                          }).toList(),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    _sectionCard(
+                      title: 'School-wise Fee Distribution',
+                      child: _barChart(_schools),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    _sectionCard(
+                      title: 'Programme-wise Fee Distribution',
+                      child: _barChart(_programs),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    _sectionCard(
+                      title: 'Degree-wise Fee Distribution',
+                      child: _barChart(_degrees),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    _sectionCard(
+                      title: 'Study Year-wise Fee Distribution',
+                      child: _barChart(_studyYears),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    _sectionCard(
+                      title: 'CQ/MQ Fee Distribution',
+                      child: _barChart(_quotas),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    _sectionCard(
+                      title: 'Expenditure Breakdown',
+                      child: _categoryBreakdown(),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Text(
+                      'Amounts are calculated from fee records in '
+                      'the active imported dataset. They are not '
+                      'verified collections or payments. Charts '
+                      'show the six highest-value groups.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
       ),
     );
   }

@@ -1,14 +1,11 @@
-
 import 'package:flutter/material.dart';
+
 import '../../services/excel_validation_service.dart';
 
 class ValidationReportPanel extends StatelessWidget {
   final ValidationResult result;
 
-  const ValidationReportPanel({
-    super.key,
-    required this.result,
-  });
+  const ValidationReportPanel({super.key, required this.result});
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +14,7 @@ class ValidationReportPanel extends StatelessWidget {
     return Card(
       elevation: 0,
       color: Theme.of(context).colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -27,10 +22,7 @@ class ValidationReportPanel extends StatelessWidget {
           children: [
             const Text(
               'Validation Report',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             Text(
@@ -101,10 +93,7 @@ class ValidationReportPanel extends StatelessWidget {
 
             const Text(
               'Issues found',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
 
@@ -121,12 +110,7 @@ class ValidationReportPanel extends StatelessWidget {
     );
   }
 
-  Widget _summaryCard(
-    String label,
-    int count,
-    Color color,
-    IconData icon,
-  ) {
+  Widget _summaryCard(String label, int count, Color color, IconData icon) {
     return Container(
       width: 125,
       padding: const EdgeInsets.all(12),
@@ -161,9 +145,7 @@ class ValidationReportPanel extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 9),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(
-          color: color.withValues(alpha: 0.25),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
         borderRadius: BorderRadius.circular(9),
       ),
       child: Row(
@@ -181,9 +163,7 @@ class ValidationReportPanel extends StatelessWidget {
               children: [
                 Text(
                   'Excel row ${issue.rowNumber} · ${issue.column}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
                 Text(issue.message),

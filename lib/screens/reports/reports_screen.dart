@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -83,9 +82,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         }
       }
 
-      final data = await _reportService.getReportData(
-        filters: _filters,
-      );
+      final data = await _reportService.getReportData(filters: _filters);
 
       if (!mounted) return;
 
@@ -95,8 +92,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ..addAll(newOptions);
 
         _matchingRecords = data['record_count'] as int;
-        _matchingTotalPaise =
-            data['source_total_paise'] as int;
+        _matchingTotalPaise = data['source_total_paise'] as int;
 
         _filterLoading = false;
       });
@@ -110,10 +106,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }
   }
 
-  Future<void> _onFilterChanged(
-    String dimension,
-    String? value,
-  ) async {
+  Future<void> _onFilterChanged(String dimension, String? value) async {
     final index = _dimensions.indexOf(dimension);
 
     setState(() {
@@ -144,8 +137,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
     await _refreshFilters();
   }
 
-
-
   List<String> _headers(List<String> categories) {
     return [
       'Admitted Batch',
@@ -167,8 +158,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     Map<String, dynamic> record,
     List<String> categories,
   ) {
-    final amounts =
-        record['category_amounts'] as Map<String, int>;
+    final amounts = record['category_amounts'] as Map<String, int>;
 
     return [
       record['admitted_batch'] ?? '',
@@ -178,15 +168,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
       record['program'] ?? '',
       record['study_year'] ?? '',
       record['quota'] ?? '',
-      ...categories.map(
-        (category) => _rupees(amounts[category]),
-      ),
-      _rupees(
-        (record['calculated_total_paise'] as num?)?.toInt(),
-      ),
-      _rupees(
-        (record['source_total_paise'] as num?)?.toInt(),
-      ),
+      ...categories.map((category) => _rupees(amounts[category])),
+      _rupees((record['calculated_total_paise'] as num?)?.toInt()),
+      _rupees((record['source_total_paise'] as num?)?.toInt()),
       record['source_sheet'] ?? '',
       record['source_row'] ?? '',
     ];
@@ -200,17 +184,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
     });
 
     try {
-      final data = await _reportService.getReportData(
-        filters: _filters,
-      );
+      final data = await _reportService.getReportData(filters: _filters);
 
-      final records =
-          data['records'] as List<Map<String, dynamic>>;
+      final records = data['records'] as List<Map<String, dynamic>>;
 
       if (records.isEmpty) {
-        throw Exception(
-          'No fee records match the selected filters.',
-        );
+        throw Exception('No fee records match the selected filters.');
       }
 
       final now = DateTime.now();
@@ -271,17 +250,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Uint8List _createCsv(Map<String, dynamic> data) {
     final categories = data['categories'] as List<String>;
 
-    final records =
-        data['records'] as List<Map<String, dynamic>>;
+    final records = data['records'] as List<Map<String, dynamic>>;
 
     final rows = <List<dynamic>>[
       ['MBU FEE MANAGER - FEE REPORT'],
       ['Generated on', DateTime.now().toString()],
       ['Total fee records', data['record_count']],
-      [
-        'Source total (INR)',
-        _money(data['source_total_paise'] as int?),
-      ],
+      ['Source total (INR)', _money(data['source_total_paise'] as int?)],
       [
         'Calculated total (INR)',
         _money(data['calculated_total_paise'] as int?),
@@ -289,16 +264,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
       [],
       ['Applied filters'],
       ..._dimensions.map(
-        (dimension) => [
-          dimension,
-          _filters[dimension] ?? 'All',
-        ],
+        (dimension) => [dimension, _filters[dimension] ?? 'All'],
       ),
       [],
       _headers(categories),
-      ...records.map(
-        (record) => _recordValues(record, categories),
-      ),
+      ...records.map((record) => _recordValues(record, categories)),
     ];
 
     String escape(dynamic value) {
@@ -309,13 +279,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
       return '"${text.replaceAll('"', '""')}"';
     }
 
-    final csv = rows
-        .map((row) => row.map(escape).join(','))
-        .join('\r\n');
+    final csv = rows.map((row) => row.map(escape).join(',')).join('\r\n');
 
-    return Uint8List.fromList(
-      utf8.encode('\uFEFF$csv'),
-    );
+    return Uint8List.fromList(utf8.encode('\uFEFF$csv'));
   }
 
   // Excel export.
@@ -325,14 +291,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     final categories = data['categories'] as List<String>;
 
-    final records =
-        data['records'] as List<Map<String, dynamic>>;
+    final records = data['records'] as List<Map<String, dynamic>>;
 
     final headers = _headers(categories);
 
-    sheet.appendRow([
-      TextCellValue('MBU FEE MANAGER - FEE REPORT'),
-    ]);
+    sheet.appendRow([TextCellValue('MBU FEE MANAGER - FEE REPORT')]);
 
     sheet.appendRow([
       TextCellValue('Generated on'),
@@ -346,23 +309,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     sheet.appendRow([
       TextCellValue('Source total (INR)'),
-      DoubleCellValue(
-        _rupees(data['source_total_paise'] as int?),
-      ),
+      DoubleCellValue(_rupees(data['source_total_paise'] as int?)),
     ]);
 
     sheet.appendRow([
       TextCellValue('Calculated total (INR)'),
-      DoubleCellValue(
-        _rupees(data['calculated_total_paise'] as int?),
-      ),
+      DoubleCellValue(_rupees(data['calculated_total_paise'] as int?)),
     ]);
 
     sheet.appendRow([]);
 
-    sheet.appendRow([
-      TextCellValue('Applied filters'),
-    ]);
+    sheet.appendRow([TextCellValue('Applied filters')]);
 
     for (final dimension in _dimensions) {
       sheet.appendRow([
@@ -373,9 +330,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     sheet.appendRow([]);
 
-    sheet.appendRow(
-      headers.map((header) => TextCellValue(header)).toList(),
-    );
+    sheet.appendRow(headers.map((header) => TextCellValue(header)).toList());
 
     for (final record in records) {
       final values = _recordValues(record, categories);
@@ -399,10 +354,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final width = i < 7
           ? 18.0
           : i < 7 + categories.length
-              ? 22.0
-              : i < 9 + categories.length
-                  ? 20.0
-                  : 15.0;
+          ? 22.0
+          : i < 9 + categories.length
+          ? 20.0
+          : 15.0;
 
       sheet.setColumnWidth(i, width);
     }
@@ -417,15 +372,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   // PDF export.
-  Future<Uint8List> _createPdf(
-    Map<String, dynamic> data,
-  ) async {
+  Future<Uint8List> _createPdf(Map<String, dynamic> data) async {
     final document = pw.Document();
 
     final categories = data['categories'] as List<String>;
 
-    final records =
-        data['records'] as List<Map<String, dynamic>>;
+    final records = data['records'] as List<Map<String, dynamic>>;
 
     final headers = _headers(categories);
 
@@ -442,10 +394,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }).toList();
 
     final appliedFilters = _dimensions
-        .map(
-          (dimension) =>
-              '$dimension: ${_filters[dimension] ?? 'All'}',
-        )
+        .map((dimension) => '$dimension: ${_filters[dimension] ?? 'All'}')
         .toList();
 
     document.addPage(
@@ -455,18 +404,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
         build: (context) => [
           pw.Text(
             'MBU FEE MANAGER',
-            style: pw.TextStyle(
-              fontSize: 20,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           pw.Text('University Fee Structure Report'),
           pw.Text('Generated: ${DateTime.now()}'),
           pw.SizedBox(height: 12),
-          pw.Text(
-            'Fee records: ${data['record_count']}',
-          ),
+          pw.Text('Fee records: ${data['record_count']}'),
           pw.Text(
             'Source total: ${_money(data['source_total_paise'] as int?)}',
           ),
@@ -476,18 +420,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
           pw.SizedBox(height: 12),
           pw.Text(
             'Applied filters',
-            style: pw.TextStyle(
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
           pw.Wrap(
             spacing: 14,
             runSpacing: 5,
             children: appliedFilters
-                .map((filter) => pw.Text(
-                      filter,
-                      style: const pw.TextStyle(fontSize: 8),
-                    ))
+                .map(
+                  (filter) =>
+                      pw.Text(filter, style: const pw.TextStyle(fontSize: 8)),
+                )
                 .toList(),
           ),
           pw.SizedBox(height: 16),
@@ -499,14 +441,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
               fontWeight: pw.FontWeight.bold,
             ),
             cellStyle: const pw.TextStyle(fontSize: 6),
-            headerDecoration: const pw.BoxDecoration(
-              color: PdfColors.blue100,
-            ),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.blue100),
             cellAlignment: pw.Alignment.centerLeft,
-            border: pw.TableBorder.all(
-              color: PdfColors.grey400,
-              width: 0.4,
-            ),
+            border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.4),
           ),
         ],
       ),
@@ -529,26 +466,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
           labelText: dimension,
           filled: true,
           fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(9),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 13,
           ),
         ),
         items: [
-          const DropdownMenuItem(
-            value: 'All',
-            child: Text('All'),
-          ),
+          const DropdownMenuItem(value: 'All', child: Text('All')),
           ...values.map(
             (value) => DropdownMenuItem(
               value: value,
-              child: Text(
-                value,
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text(value, overflow: TextOverflow.ellipsis),
             ),
           ),
         ],
@@ -566,33 +495,23 @@ class _ReportsScreenState extends State<ReportsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(
-          color: const Color(0xFFE8ECF2),
-        ),
+        border: Border.all(color: const Color(0xFFE8ECF2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.filter_alt_outlined,
-                color: Color(0xFF3157D5),
-              ),
+              const Icon(Icons.filter_alt_outlined, color: Color(0xFF3157D5)),
               const SizedBox(width: 9),
               const Expanded(
                 child: Text(
                   'Report Filters',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
               TextButton.icon(
-                onPressed: _loading || _filterLoading
-                    ? null
-                    : _resetFilters,
+                onPressed: _loading || _filterLoading ? null : _resetFilters,
                 icon: const Icon(Icons.refresh, size: 17),
                 label: const Text('Reset filters'),
               ),
@@ -605,26 +524,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Wrap(
               spacing: 13,
               runSpacing: 13,
-              children: _dimensions
-                  .map(_filterDropdown)
-                  .toList(),
+              children: _dimensions.map(_filterDropdown).toList(),
             ),
           const SizedBox(height: 18),
           Row(
             children: [
-              const Icon(
-                Icons.dataset_outlined,
-                color: Color(0xFF16865B),
-              ),
+              const Icon(Icons.dataset_outlined, color: Color(0xFF16865B)),
               const SizedBox(width: 9),
               Expanded(
                 child: Text(
                   _filterLoading
                       ? 'Calculating matching records...'
                       : '$_matchingRecords matching fee records',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
               Text(
@@ -654,9 +566,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFE8ECF2),
-        ),
+        border: Border.all(color: const Color(0xFFE8ECF2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -692,21 +602,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: _loading ||
-                      _filterLoading ||
-                      _matchingRecords == 0
+              onPressed: _loading || _filterLoading || _matchingRecords == 0
                   ? null
                   : () => _export(format),
-              icon: const Icon(
-                Icons.download_rounded,
-                size: 18,
-              ),
+              icon: const Icon(Icons.download_rounded, size: 18),
               label: Text('Export $format'),
               style: FilledButton.styleFrom(
                 backgroundColor: color,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 13,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 13),
               ),
             ),
           ),
@@ -724,13 +627,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(9),
       ),
-      child: Text(
-        message,
-        style: TextStyle(
-          color: color,
-          fontSize: 13,
-        ),
-      ),
+      child: Text(message, style: TextStyle(color: color, fontSize: 13)),
     );
   }
 
@@ -752,16 +649,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
           const SizedBox(height: 8),
           const Text(
             'Filter university fee records and export customised reports.',
-            style: TextStyle(
-              color: Color(0xFF788397),
-              fontSize: 13,
-            ),
+            style: TextStyle(color: Color(0xFF788397), fontSize: 13),
           ),
           const SizedBox(height: 22),
-          if (_message != null)
-            _statusMessage(_message!, Colors.green),
-          if (_error != null)
-            _statusMessage(_error!, Colors.red),
+          if (_message != null) _statusMessage(_message!, Colors.green),
+          if (_error != null) _statusMessage(_error!, Colors.red),
           _buildFilters(),
           const SizedBox(height: 20),
           if (_loading) ...[
@@ -786,24 +678,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
               children: [
                 _exportCard(
                   title: 'PDF Report',
-                  description:
-                      'Create a printable report with matching fee records and totals.',
+                  description: 'Create a printable report with matching fee records and totals.',
                   icon: Icons.picture_as_pdf_rounded,
                   color: const Color(0xFFD94A4A),
                   format: 'PDF',
                 ),
                 _exportCard(
                   title: 'Excel Workbook',
-                  description:
-                      'Export filtered records and expenditure categories into XLSX.',
+                  description: 'Export filtered records and expenditure categories into XLSX.',
                   icon: Icons.table_chart_rounded,
                   color: const Color(0xFF16865B),
                   format: 'Excel',
                 ),
                 _exportCard(
                   title: 'CSV Data',
-                  description:
-                      'Export filtered records as a CSV spreadsheet.',
+                  description: 'Export filtered records as a CSV spreadsheet.',
                   icon: Icons.description_rounded,
                   color: const Color(0xFF3157D5),
                   format: 'CSV',

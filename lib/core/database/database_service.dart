@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -26,10 +25,7 @@ class DatabaseService {
 
     await directory.create(recursive: true);
 
-    final databasePath = p.join(
-      directory.path,
-      'mbu_fee_manager.db',
-    );
+    final databasePath = p.join(directory.path, 'mbu_fee_manager.db');
 
     _database = await openDatabase(
       databasePath,
@@ -185,28 +181,25 @@ class DatabaseService {
   Future<Map<String, int>> getDatabaseStats() async {
     final db = await database;
 
-    final records = Sqflite.firstIntValue(
+    final records =
+        Sqflite.firstIntValue(
           await db.rawQuery('SELECT COUNT(*) FROM fee_records'),
         ) ??
         0;
 
-    final categories = Sqflite.firstIntValue(
-          await db.rawQuery(
-            'SELECT COUNT(*) FROM expenditure_categories',
-          ),
+    final categories =
+        Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM expenditure_categories'),
         ) ??
         0;
 
-    final imports = Sqflite.firstIntValue(
+    final imports =
+        Sqflite.firstIntValue(
           await db.rawQuery('SELECT COUNT(*) FROM dataset_imports'),
         ) ??
         0;
 
-    return {
-      'records': records,
-      'categories': categories,
-      'imports': imports,
-    };
+    return {'records': records, 'categories': categories, 'imports': imports};
   }
 
   Future<void> close() async {

@@ -1,10 +1,8 @@
-
 import '../core/database/database_service.dart';
 
 class ImportHistoryService {
   ImportHistoryService({DatabaseService? databaseService})
-      : _databaseService =
-            databaseService ?? DatabaseService.instance;
+    : _databaseService = databaseService ?? DatabaseService.instance;
 
   final DatabaseService _databaseService;
 
@@ -63,11 +61,9 @@ class ImportHistoryService {
       final versionNumber = target.first['version_number'];
 
       // Archive the currently active version.
-      await txn.update(
-        'dataset_imports',
-        {'status': 'archived'},
-        where: "status = 'active'",
-      );
+      await txn.update('dataset_imports', {
+        'status': 'archived',
+      }, where: "status = 'active'");
 
       // Activate the selected version.
       await txn.update(
@@ -80,8 +76,7 @@ class ImportHistoryService {
       // Record the rollback in the audit log.
       await txn.insert('audit_logs', {
         'action': 'ROLLBACK',
-        'description':
-            'Restored dataset import version $versionNumber.',
+        'description': 'Restored dataset import version $versionNumber.',
         'created_at': DateTime.now().toIso8601String(),
       });
     });

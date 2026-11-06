@@ -21,9 +21,7 @@ class SheetPreview {
 class WorkbookPreview {
   final List<SheetPreview> sheets;
 
-  const WorkbookPreview({
-    required this.sheets,
-  });
+  const WorkbookPreview({required this.sheets});
 }
 
 class ExcelImportService {
@@ -59,16 +57,20 @@ class ExcelImportService {
       }).toList();
 
       // Retain every non-empty data row.
-      final dataRows = rows.skip(headerIndex + 1).where((row) {
-        return row.any(
-          (cell) => cell?.value?.toString().trim().isNotEmpty == true,
-        );
-      }).map((row) {
-        return List.generate(headers.length, (index) {
-          if (index >= row.length) return '';
-          return row[index]?.value?.toString().trim() ?? '';
-        });
-      }).toList();
+      final dataRows = rows
+          .skip(headerIndex + 1)
+          .where((row) {
+            return row.any(
+              (cell) => cell?.value?.toString().trim().isNotEmpty == true,
+            );
+          })
+          .map((row) {
+            return List.generate(headers.length, (index) {
+              if (index >= row.length) return '';
+              return row[index]?.value?.toString().trim() ?? '';
+            });
+          })
+          .toList();
 
       final sampleRows = dataRows.take(5).toList();
 
