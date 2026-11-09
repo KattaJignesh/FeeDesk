@@ -52,7 +52,7 @@ class FeeExplorerService {
       INNER JOIN dataset_imports d ON d.id = f.import_id
       WHERE ${conditions.join(' AND ')}
       ORDER BY value
-      ''', args);
+    ''', args);
 
     return result.map((row) => row['value'].toString()).toList();
   }
@@ -77,7 +77,7 @@ class FeeExplorerService {
       FROM fee_records f
       INNER JOIN dataset_imports d ON d.id = f.import_id
       WHERE ${conditions.join(' AND ')}
-      ''', args);
+    ''', args);
 
     final categories = await db.rawQuery('''
       SELECT
@@ -89,14 +89,19 @@ class FeeExplorerService {
       INNER JOIN expenditure_categories c ON c.id = e.category_id
       WHERE ${conditions.join(' AND ')}
       GROUP BY c.id, c.name
+      HAVING SUM(e.amount_paise) != 0
       ORDER BY c.name
-      ''', args);
+    ''', args);
 
     final categoryTotals = <String, int>{};
     var calculatedTotal = 0;
 
     for (final row in categories) {
       final amount = (row['total_paise'] as num).toInt();
+
+      // Only non-zero fee categories are included.
+      if (amount == 0) continue;
+
       categoryTotals[row['category'].toString()] = amount;
       calculatedTotal += amount;
     }
@@ -121,7 +126,7 @@ class FeeExplorerService {
     final conditions = ["d.status = 'active'"];
     final args = <Object?>[];
 
-    // Exclude the Study Year filter so that all source Study Years
+    // Exclude the Study Year filter so all source Study Years
     // remain visible for comparison.
     final comparisonFilters = Map<String, String>.from(filters)
       ..remove('Study Year');
@@ -148,7 +153,7 @@ class FeeExplorerService {
         f.admitted_batch,
         f.academic_year,
         f.study_year
-      ''', args);
+    ''', args);
 
     return rows.map((row) {
       final batch = row['admitted_batch']?.toString() ?? '';
@@ -156,7 +161,6 @@ class FeeExplorerService {
       final sourceStudyYear = row['study_year']?.toString() ?? '';
 
       final expected = _calculateExpectedStudyYear(batch, academicYear);
-
       final sourceNumber = _extractStudyYearNumber(sourceStudyYear);
 
       return {

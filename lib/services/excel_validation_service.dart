@@ -42,7 +42,7 @@ class ExcelValidationService {
     final issues = <ValidationIssue>[];
     final rows = sheet.dataRows;
 
-    // 1. Check for missing required dimension mappings.
+    // 1. Check missing required dimension mappings.
     if (!mapping.isValid) {
       for (final dimension in mapping.missingDimensions) {
         issues.add(
@@ -78,7 +78,7 @@ class ExcelValidationService {
       }
     }
 
-    // Stop row validation if the dimension mapping is incomplete or duplicated.
+    // Stop row validation if dimension mapping is incomplete or duplicated.
     if (!mapping.isValid ||
         usedColumns.values.any((dimensions) => dimensions.length > 1)) {
       return ValidationResult(issues: issues, totalRows: rows.length);
@@ -98,12 +98,11 @@ class ExcelValidationService {
       return ValidationResult(issues: issues, totalRows: rows.length);
     }
 
-    // 4. Detect exact duplicate rows, not merely matching dimensions.
+    // 4. Detect exact duplicate rows.
     final seenRecords = <String>{};
 
     for (int rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       final row = rows[rowIndex];
-
       final sourceRowNumber = sheet.headerRowNumber + rowIndex + 1;
 
       final recordKey = row.join('\u001F');
@@ -138,6 +137,7 @@ class ExcelValidationService {
       }
 
       // Validate expenditure values.
+      // Blank expenditure cells are treated as zero without warnings.
       int calculatedTotalPaise = 0;
       bool allFeesValid = true;
 
@@ -148,17 +148,8 @@ class ExcelValidationService {
 
         final value = columnIndex < row.length ? row[columnIndex].trim() : '';
 
+        // Blank means zero; do not display a warning.
         if (value.isEmpty) {
-          issues.add(
-            ValidationIssue(
-              rowNumber: sourceRowNumber,
-              column: columnName,
-              message: 'Fee amount is blank.',
-              severity: ValidationSeverity.warning,
-            ),
-          );
-
-          allFeesValid = false;
           continue;
         }
 
@@ -192,10 +183,11 @@ class ExcelValidationService {
           continue;
         }
 
+        // Explicit zero is valid.
         calculatedTotalPaise += amount;
       }
 
-      // Compare component total with the source Total Fee.
+      // Compare component total with source Total Fee.
       final totalColumn = mapping.sourceTotalColumn;
 
       if (totalColumn != null && allFeesValid) {
