@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/fee_explorer_service.dart';
 
-/// Edit these to match the routes registered in your MaterialApp.
+// Edit these to match the routes registered in your MaterialApp.
 class _Routes {
   static const home = '/home';
   static const upload = '/upload';
@@ -20,12 +20,12 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
   final FeeExplorerService _service = FeeExplorerService();
 
   static const dimensions = [
-    'Admitted Batch',
     'Academic Year',
     'School',
     'Degree',
     'Program',
     'Study Year',
+    'Admitted Batch',
     'CQ/MQ',
   ];
 
@@ -33,7 +33,6 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
   final Map<String, List<String>> _options = {};
 
   Map<String, Object?> _summary = {};
-  List<Map<String, Object?>> _studyYearComparisons = [];
 
   bool _loading = true;
   bool _initialized = false;
@@ -43,6 +42,13 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
   static const Color _navy = Color(0xFF17345C);
   static const Color _pageBackground = Color(0xFFF5F7FB);
   static const Color _borderColor = Color(0xFFD6DCE7);
+
+  String _displayLabel(String dimension) {
+    if (dimension == 'Admitted Batch') {
+      return 'Admitted Branch';
+    }
+    return dimension;
+  }
 
   @override
   void initState() {
@@ -118,13 +124,10 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
       }
 
       Map<String, Object?> summary = {};
-      List<Map<String, Object?>> comparisons = [];
 
       // Fetch results only after all seven filters are selected.
       if (_allFiltersSelected) {
         summary = await _service.getFeeSummary(_filters);
-
-        comparisons = await _service.getStudyYearComparison(_filters);
       }
 
       if (!mounted || requestId != _requestId) return;
@@ -135,7 +138,6 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
           ..addAll(newOptions);
 
         _summary = summary;
-        _studyYearComparisons = comparisons;
         _loading = false;
         _initialized = true;
       });
@@ -163,7 +165,6 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
 
       // Remove previously displayed results immediately.
       _summary = {};
-      _studyYearComparisons = [];
     });
 
     await _refresh();
@@ -173,7 +174,6 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
     setState(() {
       _selected.clear();
       _summary = {};
-      _studyYearComparisons = [];
     });
 
     await _refresh();
@@ -182,7 +182,6 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
   String _rupees(Object? paise) {
     final value = paise is num ? paise.toInt() : 0;
     final rupees = value / 100;
-
     return '₹${rupees.toStringAsFixed(2)}';
   }
 
@@ -192,6 +191,7 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
 
   void _goBack() {
     final navigator = Navigator.of(context);
+
     if (navigator.canPop()) {
       navigator.pop();
     } else {
@@ -201,6 +201,7 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
 
   void _navigateTo(String route) {
     Navigator.of(context).pop(); // close drawer
+
     Navigator.of(context).pushNamedAndRemoveUntil(route, (r) => false);
   }
 
@@ -293,6 +294,7 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
   // ------------------------------------------------------------
 
   Widget _filterDropdown(String dimension) {
+    final displayLabel = _displayLabel(dimension);
     final values = _options[dimension] ?? [];
     final selectedValue = _selected[dimension];
     final index = dimensions.indexOf(dimension);
@@ -312,7 +314,7 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
         Padding(
           padding: const EdgeInsets.only(left: 2, bottom: 7),
           child: Text(
-            dimension,
+            displayLabel,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -321,8 +323,7 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
           ),
         ),
         DropdownButtonFormField<String>(
-          // Key forces a rebuild when the value/options change, because
-          // initialValue is only read when the field state is created.
+          // Key forces a rebuild when the value/options change.
           key: ValueKey('$dimension|$selectedValue|${values.length}'),
           initialValue: selectedValue,
           isExpanded: true,
@@ -332,7 +333,7 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
           style: const TextStyle(fontSize: 14, color: Color(0xFF263449)),
           decoration: InputDecoration(
             hintText: enabled
-                ? 'Select $dimension'
+                ? 'Select $displayLabel'
                 : 'Select previous filters first',
             hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade500),
             filled: true,
@@ -479,235 +480,6 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
   }
 
   // ------------------------------------------------------------
-  // STUDY YEAR VERIFICATION
-  // ------------------------------------------------------------
-
-  String _ordinal(int year) {
-    if (year % 100 >= 11 && year % 100 <= 13) {
-      return '${year}th Year';
-    }
-
-    switch (year % 10) {
-      case 1:
-        return '${year}st Year';
-      case 2:
-        return '${year}nd Year';
-      case 3:
-        return '${year}rd Year';
-      default:
-        return '${year}th Year';
-    }
-  }
-
-  Widget _buildStudyYearVerification() {
-    if (_studyYearComparisons.isEmpty) {
-      return Card(
-        margin: EdgeInsets.zero,
-        color: Colors.white,
-        child: const Padding(
-          padding: EdgeInsets.all(20),
-          child: Text('No Study Year comparison data is available.'),
-        ),
-      );
-    }
-
-    final mismatchCount = _studyYearComparisons
-        .where((row) => row['isMismatch'] == true)
-        .length;
-
-    return Card(
-      margin: EdgeInsets.zero,
-      color: Colors.white,
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: _borderColor),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Study Year Verification',
-                        style: TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.bold,
-                          color: _navy,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        'Compare the imported Study Year with the '
-                        'automatically calculated year.',
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  mismatchCount > 0
-                      ? Icons.warning_amber_rounded
-                      : Icons.verified_outlined,
-                  color: mismatchCount > 0 ? Colors.orange : Colors.green,
-                  size: 28,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: mismatchCount > 0
-                    ? Colors.orange.withValues(alpha: 0.08)
-                    : Colors.green.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    mismatchCount > 0
-                        ? Icons.warning_amber_rounded
-                        : Icons.check_circle_outline,
-                    color: mismatchCount > 0
-                        ? Colors.orange.shade800
-                        : Colors.green.shade700,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      mismatchCount > 0
-                          ? '$mismatchCount Study Year group(s) have a mismatch.'
-                          : 'No Study Year mismatches detected.',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-            for (final row in _studyYearComparisons) _buildStudyYearRow(row),
-            const SizedBox(height: 12),
-            Text(
-              'Calculation: Academic Year start − Admitted Batch '
-              'start + 1. This is a standard-entry estimate. '
-              'Lateral entry and programme-specific exceptions '
-              'may require separate rules.',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStudyYearRow(Map<String, Object?> row) {
-    final mismatch = row['isMismatch'] == true;
-    final expected = row['expectedStudyYear'] as int?;
-    final source = row['sourceStudyYear']?.toString() ?? '';
-    final count = row['recordCount'] ?? 0;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: mismatch ? Colors.orange.shade300 : Colors.grey.shade300,
-        ),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${row['admittedBatch']}  →  ${row['academicYear']}',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Excel Study Year',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      source.isEmpty ? 'Missing' : source,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Expected Study Year',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      expected == null
-                          ? 'Cannot calculate'
-                          : _ordinal(expected),
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '$count matching fee record(s)',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                ),
-              ),
-              if (expected == null)
-                const Text(
-                  'Unable to verify',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w600,
-                  ),
-                )
-              else
-                Text(
-                  mismatch ? 'Mismatch' : 'Consistent',
-                  style: TextStyle(
-                    color: mismatch
-                        ? Colors.orange.shade800
-                        : Colors.green.shade700,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------
   // BODY SECTIONS
   // ------------------------------------------------------------
 
@@ -784,6 +556,7 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
           '$recordCount',
           Icons.receipt_long_outlined,
         );
+
         final totalCard = _statCard(
           'Calculated fee total',
           _rupees(calculatedTotal),
@@ -907,9 +680,9 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Select Admitted Batch, Academic Year, '
-                'School, Degree, Program, Study Year '
-                'and CQ/MQ to view matching fee records.',
+                'Select Academic Year, School, Degree, Program, '
+                'Study Year, Admitted Branch and CQ/MQ '
+                'to view matching fee records.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade600),
               ),
@@ -933,8 +706,6 @@ class _FeeExplorerScreenState extends State<FeeExplorerScreen> {
             _buildStatCards(),
             const SizedBox(height: 20),
             _buildFeeBreakdownCard(),
-            const SizedBox(height: 20),
-            _buildStudyYearVerification(),
           ] else
             _buildEmptyPrompt(),
           const SizedBox(height: 24),
